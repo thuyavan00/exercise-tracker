@@ -53,7 +53,6 @@ app.post(
       let date = new Date(Date.now());
       if (req.body.date) {
         date = new Date(req.body.date);
-        date.setHours(24, 0, 0, 0);
       }
       const newExercise = new Exercise({
         uid: uid,
@@ -115,9 +114,7 @@ app.get('/api/users/:_id/logs', async (req, res) => {
 
     // Construct the response object
     exerciseLogs.forEach((log) => {
-      log._doc.date = new Date(
-        new Date(log._doc.date).setHours(24, 0, 0, 0)
-      ).toDateString();
+      log._doc.date = new Date(log._doc.date).toDateString();
     });
 
     toString = new Date(
