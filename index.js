@@ -114,6 +114,18 @@ app.get('/api/users/:_id/logs', async (req, res) => {
     }
 
     // Construct the response object
+    exerciseLogs.forEach((log) => {
+      log._doc.date = new Date(
+        new Date(log._doc.date).setHours(24, 0, 0, 0)
+      ).toDateString();
+    });
+
+    toString = new Date(
+      new Date(req.query.to).setHours(24, 0, 0, 0)
+    ).toDateString();
+
+    console.log(typeof toString);
+
     const response = {
       _id: userId,
       username: user.username,
@@ -128,7 +140,7 @@ app.get('/api/users/:_id/logs', async (req, res) => {
       log: exerciseLogs.map((log) => ({
         description: log.description,
         duration: log.duration,
-        date: new Date(new Date(log.date).setHours(24, 0, 0, 0)).toDateString(),
+        date: log.date,
       })),
     };
 
