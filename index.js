@@ -45,22 +45,37 @@ app.get('/api/users', async (req, res) => {
 app.post(
   '/api/users/:_id/exercises',
   expressAsyncHandler(async (req, res) => {
-    const newExercise = new Exercise({
-      uid: req.body.uid,
-      description: req.body.description,
-      duration: req.body.duration,
-      date: req.body.date,
-    });
+    try {
+      const uid = req.params._id;
 
-    const exercise = await newExercise.save();
-    const user = await User.findOne({ _id: req.body.uid });
-    res.send({
-      _id: user._id,
-      username: user.username,
-      date: exercise.date,
-      duration: exercise.duration,
-      description: exercise.description,
-    });
+      if (!uid) {
+        // Handle the case where no value is provided for userId
+        res.status(400).send('No user ID provided');
+        return;
+      }
+
+      const user = await User.findOne({ _id: uid });
+
+      const newExercise = new Exercise({
+        uid: uid,
+        description: req.body.description,
+        duration: req.body.duration,
+        date: req.body.date,
+      });
+
+      const exercise = await newExercise.save();
+
+      res.send({
+        _id: user._id,
+        username: user.username,
+        date: exercise.date,
+        duration: exercise.duration,
+        description: exercise.description,
+      });
+    } catch (err) {
+      console.error('Error:', err);
+      res.status(500).json({ error: 'Internal server error' });
+    }
   })
 );
 
