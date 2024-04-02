@@ -38,6 +38,7 @@ app.post(
 //get request to fetch users (testcase 2)
 app.get('/api/users', async (req, res) => {
   const Users = await User.find();
+  const currentDate = new Date(Date.now());
   res.send(Users);
 });
 
@@ -49,23 +50,25 @@ app.post(
       const uid = req.params._id;
 
       const user = await User.findOne({ _id: uid });
-
+      let date = new Date(Date.now());
+      if (req.body.date) {
+        date = new Date(req.body.date);
+        date.setHours(24, 0, 0, 0);
+      }
       const newExercise = new Exercise({
         uid: uid,
         description: req.body.description,
         duration: req.body.duration,
-        date: req.body.date,
+        date: date,
       });
 
       const exercise = await newExercise.save();
-      const dateObject = new Date(exercise.date);
-
-      // Modify the date format
-      exercise.date = dateObject.toDateString();
+      dateObject = new Date(exercise.date);
+      dateString = dateObject.toDateString();
       res.send({
         _id: user._id,
         username: user.username,
-        date: exercise.date,
+        date: dateString,
         duration: exercise.duration,
         description: exercise.description,
       });
@@ -114,11 +117,18 @@ app.get('/api/users/:_id/logs', async (req, res) => {
     const response = {
       _id: userId,
       username: user.username,
+      ...(req.query.to
+        ? {
+            to: new Date(
+              new Date(req.query.to).setHours(24, 0, 0, 0)
+            ).toDateString(),
+          }
+        : {}),
       count: totalCount,
       log: exerciseLogs.map((log) => ({
         description: log.description,
         duration: log.duration,
-        date: log.date,
+        date: new Date(new Date(log.date).setHours(24, 0, 0, 0)).toDateString(),
       })),
     };
 

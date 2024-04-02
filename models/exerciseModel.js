@@ -5,7 +5,7 @@ const exerciseSchema = new mongoose.Schema(
     uid: { type: String, required: true },
     description: { type: String, required: true },
     duration: { type: Number, required: true },
-    date: { type: Date, default: Date.now },
+    date: { type: Date },
   },
   {
     timestamps: false,
