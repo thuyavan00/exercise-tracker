@@ -48,12 +48,6 @@ app.post(
     try {
       const uid = req.params._id;
 
-      if (!uid) {
-        // Handle the case where no value is provided for userId
-        res.status(400).send('No user ID provided');
-        return;
-      }
-
       const user = await User.findOne({ _id: uid });
 
       const newExercise = new Exercise({
@@ -64,7 +58,10 @@ app.post(
       });
 
       const exercise = await newExercise.save();
+      const dateObject = new Date(exercise.date);
 
+      // Modify the date format
+      exercise.date = dateObject.toDateString();
       res.send({
         _id: user._id,
         username: user.username,
@@ -82,22 +79,36 @@ app.post(
 app.get('/api/users/:_id/logs', async (req, res) => {
   try {
     const userId = req.params._id;
+    const from = req.query.from;
+    const to = req.query.to;
+    const limit = req.query.limit ? parseInt(req.query.limit) : 0;
+
+    // Construct query to filter logs based on userId and date range
+    const query = { uid: userId };
+    if (from && to) {
+      query.date = { $gte: new Date(from), $lte: new Date(to) };
+    } else if (from) {
+      query.date = { $gte: new Date(from) };
+    } else if (to) {
+      query.date = { $lte: new Date(to) };
+    }
+
+    // Find the user
     const user = await User.findOne({ _id: userId });
-    const logCountResult = await Exercise.aggregate([
-      {
-        $match: {
-          uid: userId,
-        },
-      },
-      {
-        $count: 'totalCount',
-      },
-    ]);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
-    const totalCount =
-      logCountResult.length > 0 ? logCountResult[0].totalCount : 0;
+    // Count total logs matching the query
+    const totalCount = await Exercise.countDocuments(query);
 
-    const exerciseLogs = await Exercise.find({ uid: userId });
+    // Find logs based on the query and limit the results if needed
+    let exerciseLogs;
+    if (limit > 0) {
+      exerciseLogs = await Exercise.find(query).limit(limit);
+    } else {
+      exerciseLogs = await Exercise.find(query);
+    }
 
     // Construct the response object
     const response = {
